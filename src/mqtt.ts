@@ -1,16 +1,17 @@
 import { connectAsync, ErrorWithReasonCode, MqttClient } from 'mqtt';
+import type { IClientOptions } from 'mqtt';
 import { exit } from 'process';
 
 class Mqtt {
-  private server = process.env.SERVER_URL || 'mqtt://212.78.1.205';
-  private topic = process.env.BASE_TOPIC || '/';
-  private port = Number(process.env.PORT) || 1883;
-  private username = process.env.USERNAME || 'studenti';
-  private password = process.env.PASSWORD || 'studentiDRUIDLAB_1';
-  private connectTimeout = 2 * 1000; // milliseconds
-  private reconnectPeriod = 1 * 1000; // milliseconds
-  private keepalive = 2; // seconds
-  private reconnectOnConnackError = true;
+  private server: string = process.env.BROKER_URL || 'mqtt://212.78.1.205';
+  private topic: string = process.env.BASE_TOPIC || '/';
+  private port: number = Number(process.env.PORT) || 1883;
+  private username: string | undefined = process.env.BROKER_USERNAME;
+  private password: string | undefined = process.env.BROKER_PASSWORD;
+  private connectTimeout: number = 2 * 1000; // milliseconds
+  private reconnectPeriod: number = 1 * 1000; // milliseconds
+  private keepalive: number = 2; // seconds
+  private reconnectOnConnackError: boolean = true;
 
   #qos = Number(process.env.QOS) || 2;
   get qos() {
@@ -34,15 +35,20 @@ class Mqtt {
   }
 
   async startConnection() {
-    this.#client = await connectAsync(this.server, {
+    const connectionOptions: IClientOptions = {
       port: this.port,
-      username: this.username,
-      password: this.password,
       keepalive: this.keepalive,
       reconnectPeriod: this.reconnectPeriod,
       connectTimeout: this.connectTimeout,
       reconnectOnConnackError: this.reconnectOnConnackError,
-    });
+    };
+    if (this.username) {
+      connectionOptions.username = this.username;
+    }
+    if (this.password) {
+      connectionOptions.password = this.password;
+    }
+    this.#client = await connectAsync(this.server, connectionOptions);
 
     console.log('Mqtt connection stablished');
 
@@ -73,4 +79,4 @@ class Mqtt {
   }
 }
 
-export default new Mqtt();
+export { Mqtt };

@@ -2,7 +2,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import type { Measurement, UserDataArray } from './types';
 import { MeasurementType } from './types';
-import mqttClient from './mqtt';
+import { Mqtt } from './mqtt';
 import { MqttClient } from 'mqtt/*';
 
 const dataFolder = process.env.DATA_FOLDER || 'data';
@@ -17,7 +17,7 @@ async function readUserData(): Promise<UserDataArray> {
   try {
     return JSON.parse(dataString);
   } catch (err: unknown) {
-    console.error('Error parsing user data:', err);
+    console.error('Failed to parse user data JSON.', err);
     throw new Error('Failed to parse user data JSON');
   }
 }
@@ -31,13 +31,12 @@ function groupMeasurementsByTimestamp(measurements: Measurement[]) {
   for (const measurement of measurements) {
     const mt = measurement.measureType;
     if (!measurementTypeIsValid(mt)) {
-      console.warn(`Found '${mt}' which is not a valid measurement type.`);
       continue;
     }
     const timestamp = measurement.date;
     if (!group.has(timestamp)) {
       group.set(timestamp, {
-        timestamp,
+        timestamp: new Date().getTime(),
         userId: measurement.userId,
       });
     }
@@ -59,12 +58,12 @@ function measurementTypeIsValid(measureType: string) {
 export default async function main() {
   const data = await readUserData();
   const groupedData = groupMeasurementsByTimestamp(flatMeasurementData(data));
-  console.log(groupedData);
 
   // TODO: send data to MQTT broker. The measurement types to send are defined in
   //  the Topic enum
 
-  // await mqttClient.startConnection();
-  // const client: MqttClient = mqttClient.client!;
-  // await mqttClient.closeConnection();
+  const mqttClient = new Mqtt();
+  await mqttClient.startConnection();
+  const client: MqttClient = mqttClient.client!;
+  await mqttClient.closeConnection();
 }

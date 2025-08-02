@@ -5,7 +5,7 @@ export const MeasurementType = {
   AccelerationX: 'accelerationX',
   AccelerationY: 'accelerationY',
   AccelerationZ: 'accelerationZ',
-  Position: 'Position',
+  Position: 'position',
 } as const;
 
 export interface Measurement {
@@ -21,4 +21,14 @@ export interface UserData {
 
 export type UserDataArray = UserData[];
 
-export interface MqttMessage {}
+export interface MqttMessage {
+  timestamp: number,
+  userId: number,
+  heartRate: number[] | undefined,
+  breathFrequency: number[] | undefined,
+  respiration: number[] | undefined,
+  accelerationX: number[] | undefined,
+  accelerationY: number[] | undefined,
+  accelerationZ: number[] | undefined,
+  position: number[] | undefined,
+}

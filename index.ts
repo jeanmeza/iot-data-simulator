@@ -1,6 +1,6 @@
 import { configDotenv } from 'dotenv';
-import main from './src/main';
+configDotenv({ override: true, encoding: 'utf-8', debug: true });
 
-configDotenv();
+import main from './src/main';
 
 (async () => await main())();
