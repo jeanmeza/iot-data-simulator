@@ -1,0 +1,25 @@
+{
+  "name": "iot-data-simulator",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts",
+    "check": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "mqtt": "^5.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}
