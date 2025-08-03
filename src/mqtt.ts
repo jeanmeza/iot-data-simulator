@@ -3,7 +3,7 @@ import type { IClientOptions } from 'mqtt';
 
 class Mqtt {
   private server: string = process.env.BROKER_URL || 'mqtt://212.78.1.205';
-  private port: number = Number(process.env.PORT) || 1883;
+  private port: number = Number(process.env.BROKER_PORT) || 1883;
   private username: string | undefined = process.env.BROKER_USERNAME;
   private password: string | undefined = process.env.BROKER_PASSWORD;
   private connectTimeout: number = 5 * 1000; // milliseconds
