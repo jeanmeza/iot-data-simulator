@@ -1,7 +1,12 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
-import type { Measurement, MqttMessage, UserDataArray } from './types';
-import { MeasurementType } from './types';
+import type {
+  Measurement,
+  MeasurementType,
+  DataGroup,
+  UserDataArray,
+} from './types';
+import { MeasurementTypeEnum } from './types';
 import { Mqtt } from './mqtt';
 
 const dataFolder = process.env.DATA_FOLDER || 'data';
@@ -40,11 +45,11 @@ function flatMeasurementData(data: UserDataArray): Measurement[] {
  */
 function groupMeasurementsByTimestamp(
   measurements: Measurement[],
-): Map<number, MqttMessage> {
+): Map<number, DataGroup> {
   const group = new Map();
   for (const measurement of measurements) {
     const mt = measurement.measureType;
-    if (!measurementTypeIsValid(mt)) {
+    if (ignoreMeasurementType(mt)) {
       continue;
     }
     const timestamp = measurement.date;
@@ -55,7 +60,7 @@ function groupMeasurementsByTimestamp(
       });
     }
     const measureKey: string =
-      MeasurementType[mt as keyof typeof MeasurementType];
+      MeasurementTypeEnum[mt as keyof typeof MeasurementTypeEnum];
 
     if (measureKey) {
       group.get(timestamp)[measureKey] = measurement.value;
@@ -70,9 +75,8 @@ function groupMeasurementsByTimestamp(
  * @param measureType the measurement type to validate
  * @returns
  */
-function measurementTypeIsValid(measureType: string) {
-  const keys = Object.keys(MeasurementType);
-  return keys.includes(measureType);
+function ignoreMeasurementType(measureType: MeasurementType) {
+  return measureType === 'R2R' || measureType === 'ECG';
 }
 
 /**
@@ -83,7 +87,7 @@ function measurementTypeIsValid(measureType: string) {
  * @param abortSignal an AbortSignal to allow graceful shutdown
  */
 async function prepareAndSendMessages(
-  data: Map<number, MqttMessage>,
+  data: Map<number, DataGroup>,
   mqttClient: Mqtt,
   abortSignal: AbortSignal,
 ) {
@@ -108,7 +112,7 @@ async function prepareAndSendMessages(
         date: Date.now(),
         value: datum.heartRate,
         userId: datum.userId,
-        measureType: MeasurementType.HeartRate,
+        measureType: 'HeartRate',
       };
       mqttClient.sendMessage(topic, JSON.stringify(msg));
     }
@@ -117,7 +121,7 @@ async function prepareAndSendMessages(
         date: Date.now(),
         value: datum.breathFrequency,
         userId: datum.userId,
-        measureType: MeasurementType.BreathFrequency,
+        measureType: 'BreathFrequency',
       };
       mqttClient.sendMessage(topic, JSON.stringify(msg));
     }
@@ -126,7 +130,7 @@ async function prepareAndSendMessages(
         date: Date.now(),
         value: datum.respiration,
         userId: datum.userId,
-        measureType: MeasurementType.Respiration,
+        measureType: 'Respiration',
       };
       mqttClient.sendMessage(topic, JSON.stringify(msg));
     }
@@ -135,7 +139,7 @@ async function prepareAndSendMessages(
         date: Date.now(),
         value: datum.accelerationX,
         userId: datum.userId,
-        measureType: MeasurementType.AccelerationX,
+        measureType: 'AccelerationX',
       };
       mqttClient.sendMessage(topic, JSON.stringify(msg));
     }
@@ -144,7 +148,7 @@ async function prepareAndSendMessages(
         date: Date.now(),
         value: datum.accelerationY,
         userId: datum.userId,
-        measureType: MeasurementType.AccelerationY,
+        measureType: 'AccelerationY',
       };
       mqttClient.sendMessage(topic, JSON.stringify(msg));
     }
@@ -153,7 +157,7 @@ async function prepareAndSendMessages(
         date: Date.now(),
         value: datum.accelerationZ,
         userId: datum.userId,
-        measureType: MeasurementType.AccelerationZ,
+        measureType: 'AccelerationZ',
       };
       mqttClient.sendMessage(topic, JSON.stringify(msg));
     }
@@ -162,7 +166,7 @@ async function prepareAndSendMessages(
         date: Date.now(),
         value: datum.position,
         userId: datum.userId,
-        measureType: MeasurementType.Position,
+        measureType: 'Position',
       };
       mqttClient.sendMessage(topic, JSON.stringify(msg));
     }

@@ -1,6 +1,8 @@
-export const MeasurementType = {
+export const MeasurementTypeEnum = {
   HeartRate: 'heartRate',
+  R2R: 'r2r',
   BreathFrequency: 'breathFrequency',
+  ECG: 'ecg',
   Respiration: 'respiration',
   AccelerationX: 'accelerationX',
   AccelerationY: 'accelerationY',
@@ -8,11 +10,13 @@ export const MeasurementType = {
   Position: 'position',
 } as const;
 
+export type MeasurementType = keyof typeof MeasurementTypeEnum;
+
 export interface Measurement {
   date: number;
   value: number[];
   userId: number;
-  measureType: string;
+  measureType: MeasurementType;
 }
 
 export interface UserData {
@@ -21,7 +25,7 @@ export interface UserData {
 
 export type UserDataArray = UserData[];
 
-export interface MqttMessage {
+export interface DataGroup {
   timestamp: number;
   userId: number;
   heartRate: number[] | undefined;
