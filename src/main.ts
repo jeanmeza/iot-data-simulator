@@ -106,7 +106,7 @@ async function prepareAndSendMessages(
     if (!datum) {
       continue;
     }
-    const topic = 'sensors/howdy/data/';
+    const topic = 'sensor/howdy/data';
     if (datum.heartRate) {
       const msg: Measurement = {
         date: Date.now(),
