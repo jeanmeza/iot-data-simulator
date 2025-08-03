@@ -4,7 +4,6 @@ import { exit } from 'process';
 
 class Mqtt {
   private server: string = process.env.BROKER_URL || 'mqtt://212.78.1.205';
-  private topic: string = process.env.BASE_TOPIC || '/';
   private port: number = Number(process.env.PORT) || 1883;
   private username: string | undefined = process.env.BROKER_USERNAME;
   private password: string | undefined = process.env.BROKER_PASSWORD;
@@ -61,6 +60,18 @@ class Mqtt {
     this.#client.on('offline', () => console.log('client offline'));
 
     this.#client.on('error', (err) => this.handleError(err));
+  }
+
+  sendMessage(topic: string, message: string | Buffer) {
+    if (!this.#client) {
+      console.error(
+        'Connection has not been established. Call startConnection first',
+      );
+      exit(1);
+    }
+    this.#client.publish(topic, message, () => {
+      console.log(`Message sent to topic ${topic}:`, message);
+    });
   }
 
   private async handleError(err: Error | ErrorWithReasonCode) {
