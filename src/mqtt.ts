@@ -7,7 +7,7 @@ class Mqtt {
   private port: number = Number(process.env.PORT) || 1883;
   private username: string | undefined = process.env.BROKER_USERNAME;
   private password: string | undefined = process.env.BROKER_PASSWORD;
-  private connectTimeout: number = 2 * 1000; // milliseconds
+  private connectTimeout: number = 5 * 1000; // milliseconds
   private reconnectPeriod: number = 1 * 1000; // milliseconds
   private keepalive: number = 2; // seconds
   private reconnectOnConnackError: boolean = true;
@@ -23,12 +23,16 @@ class Mqtt {
   }
 
   #client: MqttClient | undefined = undefined;
-  get client(): MqttClient | undefined {
+  /**
+   * Get the MQTT client instance.
+   * Throws an error if the connection has not been established.
+   */
+  get client(): MqttClient {
     if (!this.#client) {
       console.error(
         'Connection has not been stablished. Call the startConnection method first',
       );
-      exit(1);
+      throw new Error('Connection not established');
     }
     return this.#client;
   }
@@ -63,13 +67,8 @@ class Mqtt {
   }
 
   sendMessage(topic: string, message: string | Buffer) {
-    if (!this.#client) {
-      console.error(
-        'Connection has not been established. Call startConnection first',
-      );
-      exit(1);
-    }
-    this.#client.publish(topic, message, () => {
+    // Ensure the client is connected before sending a message
+    this.client.publish(topic, message, () => {
       console.log(`Message sent to topic ${topic}:`, message);
     });
   }
