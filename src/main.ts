@@ -87,22 +87,101 @@ async function prepareAndSendMessages(
   mqttClient: Mqtt,
   abortSignal: AbortSignal,
 ) {
-  const sortedKeys = Array.from(data.keys()).sort((a, b) => a - b);
-  const timeDeltas = sortedKeys.slice(1).map((key, i) => key - sortedKeys[i]);
+  const sortedTimestamps = Array.from(data.keys()).sort((a, b) => a - b);
+  const timeDeltas = sortedTimestamps
+    .slice(1)
+    .map((key, i) => key - sortedTimestamps[i]);
 
-  for (let i = 0; i < sortedKeys.length; i++) {
+  for (let i = 0; i < sortedTimestamps.length; i++) {
     if (abortSignal.aborted) {
       break;
     }
 
-    const key = sortedKeys[i];
-    const msg = { ...data.get(key), timestamp: Date.now() };
-    mqttClient.sendMessage('sensors/howdy/data', JSON.stringify(msg));
-
-    if (i < timeDeltas.length) {
-      const delay = timeDeltas[i];
-      await new Promise((res) => setTimeout(res, delay * 1000));
+    const timestamp = sortedTimestamps[i];
+    const datum = data.get(timestamp);
+    if (!datum) {
+      continue;
     }
+    const topic = 'sensors/howdy/data/';
+    if (datum.heartRate) {
+      const msg: Measurement = {
+        date: Date.now(),
+        value: datum.heartRate,
+        userId: datum.userId,
+        measureType: MeasurementType.HeartRate,
+      };
+      mqttClient.sendMessage(topic, JSON.stringify(msg));
+    }
+    if (datum.breathFrequency) {
+      const msg: Measurement = {
+        date: Date.now(),
+        value: datum.breathFrequency,
+        userId: datum.userId,
+        measureType: MeasurementType.BreathFrequency,
+      };
+      mqttClient.sendMessage(topic, JSON.stringify(msg));
+    }
+    if (datum.respiration) {
+      const msg: Measurement = {
+        date: Date.now(),
+        value: datum.respiration,
+        userId: datum.userId,
+        measureType: MeasurementType.Respiration,
+      };
+      mqttClient.sendMessage(topic, JSON.stringify(msg));
+    }
+    if (datum.accelerationX) {
+      const msg: Measurement = {
+        date: Date.now(),
+        value: datum.accelerationX,
+        userId: datum.userId,
+        measureType: MeasurementType.AccelerationX,
+      };
+      mqttClient.sendMessage(topic, JSON.stringify(msg));
+    }
+    if (datum.accelerationY) {
+      const msg: Measurement = {
+        date: Date.now(),
+        value: datum.accelerationY,
+        userId: datum.userId,
+        measureType: MeasurementType.AccelerationY,
+      };
+      mqttClient.sendMessage(topic, JSON.stringify(msg));
+    }
+    if (datum.accelerationZ) {
+      const msg: Measurement = {
+        date: Date.now(),
+        value: datum.accelerationZ,
+        userId: datum.userId,
+        measureType: MeasurementType.AccelerationZ,
+      };
+      mqttClient.sendMessage(topic, JSON.stringify(msg));
+    }
+    if (datum.position) {
+      const msg: Measurement = {
+        date: Date.now(),
+        value: datum.position,
+        userId: datum.userId,
+        measureType: MeasurementType.Position,
+      };
+      mqttClient.sendMessage(topic, JSON.stringify(msg));
+    }
+
+    await waitDelta(i, timeDeltas);
+    console.log('');
+  }
+}
+
+/**
+ * Wait for a specified time delta before proceeding.
+ *
+ * @param i the current index in the timeDeltas array
+ * @param timeDeltas  an array of time deltas in seconds
+ */
+async function waitDelta(i: number, timeDeltas: number[]) {
+  if (i < timeDeltas.length) {
+    const delay = timeDeltas[i];
+    await new Promise((res) => setTimeout(res, delay * 1000));
   }
 }
 
