@@ -22,13 +22,13 @@ export interface UserData {
 export type UserDataArray = UserData[];
 
 export interface MqttMessage {
-  timestamp: number,
-  userId: number,
-  heartRate: number[] | undefined,
-  breathFrequency: number[] | undefined,
-  respiration: number[] | undefined,
-  accelerationX: number[] | undefined,
-  accelerationY: number[] | undefined,
-  accelerationZ: number[] | undefined,
-  position: number[] | undefined,
+  timestamp: number;
+  userId: number;
+  heartRate: number[] | undefined;
+  breathFrequency: number[] | undefined;
+  respiration: number[] | undefined;
+  accelerationX: number[] | undefined;
+  accelerationY: number[] | undefined;
+  accelerationZ: number[] | undefined;
+  position: number[] | undefined;
 }
