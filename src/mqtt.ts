@@ -1,6 +1,5 @@
 import { connectAsync, ErrorWithReasonCode, MqttClient } from 'mqtt';
 import type { IClientOptions } from 'mqtt';
-import { exit } from 'process';
 
 class Mqtt {
   private server: string = process.env.BROKER_URL || 'mqtt://212.78.1.205';
