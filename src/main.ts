@@ -97,7 +97,7 @@ async function prepareAndSendMessages(
 
     const key = sortedKeys[i];
     const msg = { ...data.get(key), timestamp: Date.now() };
-    mqttClient.sendMessage('/sensor/howdy/heartRate', JSON.stringify(msg));
+    mqttClient.sendMessage('/sensor/howdy/data', JSON.stringify(msg));
 
     if (i < timeDeltas.length) {
       const delay = timeDeltas[i];
