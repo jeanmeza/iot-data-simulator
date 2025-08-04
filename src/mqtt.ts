@@ -26,13 +26,7 @@ class Mqtt {
    * Get the MQTT client instance.
    * Throws an error if the connection has not been established.
    */
-  get client(): MqttClient {
-    if (!this.#client) {
-      console.error(
-        'Connection has not been stablished. Call the startConnection method first',
-      );
-      throw new Error('Connection not established');
-    }
+  get client(): MqttClient | undefined {
     return this.#client;
   }
 
@@ -63,12 +57,29 @@ class Mqtt {
     this.#client.on('offline', () => console.log('client offline'));
 
     this.#client.on('error', (err) => this.handleError(err));
+
+    this.#client.on('close', () => console.log('MQTT connection closed'));
+
+    this.#client.on('reconnect', () => console.log('MQTT reconnecting...'));
+    
+    this.#client.on('error', (err) => console.error('MQTT error:', err.message));
   }
 
-  sendMessage(topic: string, message: string | Buffer) {
-    // Ensure the client is connected before sending a message
-    this.client.publish(topic, message, () => {
-      console.log(`Message sent to topic ${topic}:`, message);
+  sendMessage(topic: string, message: string) {
+    const client = this.client;
+    if (!client || !client.connected) {
+      console.warn('MQTT client not connected. Skipping message:', topic);
+      return;
+    }
+
+    console.log(`Publishing to ${topic}:`, message);
+
+    client.publish(topic, message, (err) => {
+      if (err) {
+        console.error('Failed to publish message:', err.message);
+      } else {
+        console.log('Message sent successfully');
+      }
     });
   }
 
