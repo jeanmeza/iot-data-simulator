@@ -76,7 +76,9 @@ function groupMeasurementsByTimestamp(
  * @returns
  */
 function ignoreMeasurementType(measureType: MeasurementType) {
-  return measureType === 'R2R' || measureType === 'ECG';
+  return (
+    measureType === 'R2R' || measureType === 'ECG' || measureType === 'Position'
+  );
 }
 
 /**
