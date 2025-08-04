@@ -61,11 +61,13 @@ class Mqtt {
     this.#client.on('close', () => console.log('MQTT connection closed'));
 
     this.#client.on('reconnect', () => console.log('MQTT reconnecting...'));
-    
-    this.#client.on('error', (err) => console.error('MQTT error:', err.message));
+
+    this.#client.on('error', (err) =>
+      console.error('MQTT error:', err.message),
+    );
   }
 
-  sendMessage(topic: string, message: string) {
+  sendMessage(topic: string, message: string | Buffer) {
     const client = this.client;
     if (!client || !client.connected) {
       console.warn('MQTT client not connected. Skipping message:', topic);
@@ -93,7 +95,6 @@ class Mqtt {
   async closeConnection() {
     if (this.#client) {
       await this.#client.endAsync();
-      console.log('Mqtt connection closed');
       this.#client = undefined;
     }
   }
