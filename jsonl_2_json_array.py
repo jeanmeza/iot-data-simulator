@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+This script reads a JSON Lines file and converts it into a JSON array format.
+The file does not necessarily have the `jsonl` extension, but it is structured as JSON Lines.
+"""
+
 input_file = "./data/signal-mongodb-07ago2025-userGDZ.json"
 output_file = "./data/07ago2025.json"
 
