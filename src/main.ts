@@ -6,8 +6,7 @@ import type {
   DataGroup,
   UserDataArray,
 } from './types';
-import { MeasurementTypeEnum } from './types';
-import { Mqtt } from './mqtt';
+import { FakeMqtt, IMqtt, Mqtt } from './mqtt';
 
 const dataFolder = process.env.DATA_FOLDER || 'data';
 
@@ -48,8 +47,8 @@ function groupMeasurementsByTimestamp(
 ): Map<number, DataGroup> {
   const group = new Map();
   for (const measurement of measurements) {
-    const mt = measurement.measureType;
-    if (ignoreMeasurementType(mt)) {
+    const measureKey = measurement.measureType;
+    if (ignoreMeasurementType(measureKey)) {
       continue;
     }
     const timestamp = measurement.date;
@@ -59,12 +58,8 @@ function groupMeasurementsByTimestamp(
         userId: measurement.userId,
       });
     }
-    const measureKey: string =
-      MeasurementTypeEnum[mt as keyof typeof MeasurementTypeEnum];
 
-    if (measureKey) {
-      group.get(timestamp)[measureKey] = measurement.value;
-    }
+    group.get(timestamp)[measureKey] = measurement.value;
   }
   return group;
 }
@@ -90,13 +85,22 @@ function ignoreMeasurementType(measureType: MeasurementType) {
  */
 async function prepareAndSendMessages(
   data: Map<number, DataGroup>,
-  mqttClient: Mqtt,
+  mqttClient: IMqtt,
   abortSignal: AbortSignal,
 ) {
   const sortedTimestamps = Array.from(data.keys()).sort((a, b) => a - b);
   const timeDeltas = sortedTimestamps
     .slice(1)
     .map((key, i) => key - sortedTimestamps[i]);
+
+  const measurementTypes: (keyof Omit<DataGroup, 'timestamp' | 'userId'>)[] = [
+    'HeartRate',
+    'BreathFrequency',
+    'Respiration',
+    'AccelerationX',
+    'AccelerationY',
+    'AccelerationZ',
+  ] as const;
 
   for (let i = 0; i < sortedTimestamps.length; i++) {
     if (abortSignal.aborted) {
@@ -109,68 +113,18 @@ async function prepareAndSendMessages(
       continue;
     }
     const topic = 'sensor/howdy/data';
-    if (datum.heartRate) {
-      const msg: Measurement = {
-        date: Date.now(),
-        value: datum.heartRate,
-        userId: datum.userId,
-        measureType: 'HeartRate',
-      };
-      mqttClient.sendMessage(topic, JSON.stringify(msg));
-    }
-    if (datum.breathFrequency) {
-      const msg: Measurement = {
-        date: Date.now(),
-        value: datum.breathFrequency,
-        userId: datum.userId,
-        measureType: 'BreathFrequency',
-      };
-      mqttClient.sendMessage(topic, JSON.stringify(msg));
-    }
-    if (datum.respiration) {
-      const msg: Measurement = {
-        date: Date.now(),
-        value: datum.respiration,
-        userId: datum.userId,
-        measureType: 'Respiration',
-      };
-      mqttClient.sendMessage(topic, JSON.stringify(msg));
-    }
-    if (datum.accelerationX) {
-      const msg: Measurement = {
-        date: Date.now(),
-        value: datum.accelerationX,
-        userId: datum.userId,
-        measureType: 'AccelerationX',
-      };
-      mqttClient.sendMessage(topic, JSON.stringify(msg));
-    }
-    if (datum.accelerationY) {
-      const msg: Measurement = {
-        date: Date.now(),
-        value: datum.accelerationY,
-        userId: datum.userId,
-        measureType: 'AccelerationY',
-      };
-      mqttClient.sendMessage(topic, JSON.stringify(msg));
-    }
-    if (datum.accelerationZ) {
-      const msg: Measurement = {
-        date: Date.now(),
-        value: datum.accelerationZ,
-        userId: datum.userId,
-        measureType: 'AccelerationZ',
-      };
-      mqttClient.sendMessage(topic, JSON.stringify(msg));
-    }
-    if (datum.position) {
-      const msg: Measurement = {
-        date: Date.now(),
-        value: datum.position,
-        userId: datum.userId,
-        measureType: 'Position',
-      };
-      mqttClient.sendMessage(topic, JSON.stringify(msg));
+
+    for (const type of measurementTypes) {
+      const value = datum[type];
+      if (value) {
+        const msg: Measurement = {
+          date: Date.now(),
+          value,
+          userId: datum.userId,
+          measureType: type,
+        };
+        mqttClient.sendMessage(topic, JSON.stringify(msg));
+      }
     }
 
     await waitDelta(i, timeDeltas);
@@ -203,7 +157,8 @@ export default async function main(
   const data = await readUserData();
   const groupedData = groupMeasurementsByTimestamp(flatMeasurementData(data));
 
-  const mqttClient = new Mqtt();
+  // const mqttClient: IMqtt = new FakeMqtt();
+  const mqttClient: IMqtt = new Mqtt();
   await mqttClient.startConnection();
 
   // don't await here, let the messages be sent asynchronously

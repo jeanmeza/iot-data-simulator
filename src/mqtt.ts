@@ -1,7 +1,13 @@
 import { connectAsync, ErrorWithReasonCode, MqttClient } from 'mqtt';
 import type { IClientOptions } from 'mqtt';
 
-class Mqtt {
+export interface IMqtt {
+  startConnection(): Promise<void>;
+  sendMessage(topic: string, message: string | Buffer): void;
+  closeConnection(): Promise<void>;
+}
+
+export class Mqtt implements IMqtt {
   private server: string = process.env.BROKER_URL || 'broker.hivemq.com';
   private port: number = Number(process.env.BROKER_PORT) || 1883;
   private username: string | undefined = process.env.BROKER_USERNAME;
@@ -100,4 +106,16 @@ class Mqtt {
   }
 }
 
-export { Mqtt };
+export class FakeMqtt implements IMqtt {
+  async startConnection() {
+    console.log('Fake MQTT connection started');
+  }
+
+  sendMessage(topic: string, message: string | Buffer) {
+    console.log(`Fake publishing to ${topic}:`, message);
+  }
+
+  async closeConnection() {
+    console.log('Fake MQTT connection closed');
+  }
+}

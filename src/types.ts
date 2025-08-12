@@ -1,16 +1,13 @@
-export const MeasurementTypeEnum = {
-  HeartRate: 'heartRate',
-  R2R: 'r2r',
-  BreathFrequency: 'breathFrequency',
-  ECG: 'ecg',
-  Respiration: 'respiration',
-  AccelerationX: 'accelerationX',
-  AccelerationY: 'accelerationY',
-  AccelerationZ: 'accelerationZ',
-  Position: 'position',
-} as const;
-
-export type MeasurementType = keyof typeof MeasurementTypeEnum;
+export type MeasurementType =
+  | 'HeartRate'
+  | 'R2R'
+  | 'BreathFrequency'
+  | 'ECG'
+  | 'Respiration'
+  | 'AccelerationX'
+  | 'AccelerationY'
+  | 'AccelerationZ'
+  | 'Position';
 
 export interface Measurement {
   date: number;
@@ -28,11 +25,10 @@ export type UserDataArray = UserData[];
 export interface DataGroup {
   timestamp: number;
   userId: number;
-  heartRate: number[] | undefined;
-  breathFrequency: number[] | undefined;
-  respiration: number[] | undefined;
-  accelerationX: number[] | undefined;
-  accelerationY: number[] | undefined;
-  accelerationZ: number[] | undefined;
-  position: number[] | undefined;
+  HeartRate?: number[];
+  BreathFrequency?: number[];
+  Respiration?: number[];
+  AccelerationX?: number[];
+  AccelerationY?: number[];
+  AccelerationZ?: number[];
 }
