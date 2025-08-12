@@ -93,14 +93,16 @@ async function prepareAndSendMessages(
     .slice(1)
     .map((key, i) => key - sortedTimestamps[i]);
 
-  const measurementTypes: (keyof Omit<DataGroup, 'timestamp' | 'userId'>)[] = [
+  const measurementTypes = [
     'HeartRate',
     'BreathFrequency',
     'Respiration',
     'AccelerationX',
     'AccelerationY',
     'AccelerationZ',
-  ] as const;
+  ] as const satisfies ReadonlyArray<
+    keyof Omit<DataGroup, 'timestamp' | 'userId'>
+  >;
 
   for (let i = 0; i < sortedTimestamps.length; i++) {
     if (abortSignal.aborted) {
