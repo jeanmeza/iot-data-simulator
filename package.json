@@ -5,7 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "tsx index.ts",
-    "check": "tsc"
+    "check": "tsc",
+    "subscribe": "node raspberrypi_test/mqtt_subscriber.js"
   },
   "keywords": [],
   "author": "",
