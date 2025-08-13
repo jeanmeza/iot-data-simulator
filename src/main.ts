@@ -4,7 +4,7 @@ import type {
   Measurement,
   MeasurementType,
   DataGroup,
-  UserDataArray,
+  UserData,
 } from './types';
 import { FakeMqtt, IMqtt, Mqtt } from './mqtt';
 
@@ -13,11 +13,13 @@ const dataFolder = process.env.DATA_FOLDER || 'data';
 /**
  * Read user data from a JSON file.
  *
- * @returns {Promise<UserDataArray>} Returns a promise that resolves to an array of UserData objects.
+ * @returns {Promise<UserData[]>} Returns a promise that resolves to an array of UserData objects.
  */
-async function readUserData(): Promise<UserDataArray> {
-  const user1 = path.join(dataFolder, 'user1.json');
-  const dataString = await readFile(user1, 'utf8');
+async function readUserData(
+  filename: string,
+): Promise<UserData[] | Measurement[]> {
+  const dataFile = path.join(dataFolder, filename);
+  const dataString = await readFile(dataFile, 'utf-8');
   try {
     return JSON.parse(dataString);
   } catch (err: unknown) {
@@ -32,7 +34,7 @@ async function readUserData(): Promise<UserDataArray> {
  * @param data the user data to flatten
  * @returns a flat array of Measurement objects
  */
-function flatMeasurementData(data: UserDataArray): Measurement[] {
+function flatMeasurementData(data: UserData[]): Measurement[] {
   return data.map((d) => d.data).flat();
 }
 
@@ -59,7 +61,9 @@ function groupMeasurementsByTimestamp(
       });
     }
 
-    group.get(timestamp)[measureKey] = measurement.value;
+    if (group.has(timestamp)) {
+      group.get(timestamp)[measureKey] = measurement.value;
+    }
   }
   return group;
 }
@@ -100,6 +104,9 @@ async function prepareAndSendMessages(
     'AccelerationX',
     'AccelerationY',
     'AccelerationZ',
+    'PhoneLatitude',
+    'PhoneLongitude',
+    'PhoneAltitude',
   ] as const satisfies ReadonlyArray<
     keyof Omit<DataGroup, 'timestamp' | 'userId'>
   >;
@@ -148,6 +155,32 @@ async function waitDelta(i: number, timeDeltas: number[]) {
 }
 
 /**
+ * Read user data from a file and send it via MQTT.
+ *
+ * @param filename the name of the file containing user data
+ * @param mqttClient the MQTT client to use for sending messages
+ * @param flattenArray whether to flatten the user data array
+ * @returns a promise that resolves when the data has been read and sent
+ * @throws Error if there is an issue reading or parsing the data
+ */
+async function readDataAndSendIt(
+  filename: string,
+  mqttClient: IMqtt,
+  flattenArray: boolean,
+): Promise<void> {
+  const data = await readUserData(filename);
+  const flattenedData = flattenArray
+    ? flatMeasurementData(data as UserData[])
+    : (data as Measurement[]);
+  const groupedData = groupMeasurementsByTimestamp(flattenedData);
+  await prepareAndSendMessages(
+    groupedData,
+    mqttClient,
+    new AbortController().signal,
+  );
+}
+
+/**
  * Main function to initialize the MQTT client and send messages.
  *
  * @param abortSignal an AbortSignal to allow graceful shutdown
@@ -156,15 +189,17 @@ async function waitDelta(i: number, timeDeltas: number[]) {
 export default async function main(
   abortSignal: AbortSignal,
 ): Promise<() => Promise<void>> {
-  const data = await readUserData();
-  const groupedData = groupMeasurementsByTimestamp(flatMeasurementData(data));
-
   // const mqttClient: IMqtt = new FakeMqtt();
   const mqttClient: IMqtt = new Mqtt();
   await mqttClient.startConnection();
 
-  // don't await here, let the messages be sent asynchronously
-  prepareAndSendMessages(groupedData, mqttClient, abortSignal);
+  Promise.all([
+    readDataAndSendIt('user1.json', mqttClient, true),
+    readDataAndSendIt('05ago2025.json', mqttClient, false),
+    readDataAndSendIt('07ago2025.json', mqttClient, false),
+  ]).catch((err) => {
+    console.error('Error reading data and sending messages:', err);
+  });
 
   return async () => {
     await mqttClient.closeConnection();

@@ -7,9 +7,13 @@ export type MeasurementType =
   | 'AccelerationX'
   | 'AccelerationY'
   | 'AccelerationZ'
-  | 'Position';
+  | 'Position'
+  | 'PhoneLatitude'
+  | 'PhoneLongitude'
+  | 'PhoneAltitude';
 
 export interface Measurement {
+  _id?: { $oid: string } | undefined; // Not all of the data have this field
   date: number;
   value: number[];
   userId: number;
@@ -20,15 +24,16 @@ export interface UserData {
   data: Measurement[];
 }
 
-export type UserDataArray = UserData[];
-
 export interface DataGroup {
   timestamp: number;
   userId: number;
-  HeartRate?: number[];
-  BreathFrequency?: number[];
-  Respiration?: number[];
-  AccelerationX?: number[];
-  AccelerationY?: number[];
-  AccelerationZ?: number[];
+  HeartRate?: number[] | undefined;
+  BreathFrequency?: number[] | undefined;
+  Respiration?: number[] | undefined;
+  AccelerationX?: number[] | undefined;
+  AccelerationY?: number[] | undefined;
+  AccelerationZ?: number[] | undefined;
+  PhoneLatitude?: number[] | undefined;
+  PhoneLongitude?: number[] | undefined;
+  PhoneAltitude?: number[] | undefined;
 }

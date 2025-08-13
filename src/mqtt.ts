@@ -1,12 +1,20 @@
 import { connectAsync, ErrorWithReasonCode, MqttClient } from 'mqtt';
 import type { IClientOptions } from 'mqtt';
 
+/**
+ * Interface for MQTT client operations.
+ * This interface defines the methods required for an MQTT client to start a
+ * connection, send messages, and close the connection.
+ */
 export interface IMqtt {
   startConnection(): Promise<void>;
   sendMessage(topic: string, message: string | Buffer): void;
   closeConnection(): Promise<void>;
 }
 
+/**
+ * Class implementing the IMqtt interface for connecting to an MQTT broker.
+ */
 export class Mqtt implements IMqtt {
   private server: string = process.env.BROKER_URL || 'broker.hivemq.com';
   private port: number = Number(process.env.BROKER_PORT) || 1883;
@@ -106,6 +114,10 @@ export class Mqtt implements IMqtt {
   }
 }
 
+/**
+ * Fake MQTT client for testing purposes.
+ * This class simulates the behavior of an MQTT client without actual network communication.
+ */
 export class FakeMqtt implements IMqtt {
   async startConnection() {
     console.log('Fake MQTT connection started');
