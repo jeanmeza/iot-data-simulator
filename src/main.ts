@@ -164,6 +164,7 @@ async function waitDelta(i: number, timeDeltas: number[]) {
  * @throws Error if there is an issue reading or parsing the data
  */
 async function readDataAndSendIt(
+  abortSignal: AbortSignal,
   filename: string,
   mqttClient: IMqtt,
   flattenArray: boolean,
@@ -173,11 +174,7 @@ async function readDataAndSendIt(
     ? flatMeasurementData(data as UserData[])
     : (data as Measurement[]);
   const groupedData = groupMeasurementsByTimestamp(flattenedData);
-  await prepareAndSendMessages(
-    groupedData,
-    mqttClient,
-    new AbortController().signal,
-  );
+  await prepareAndSendMessages(groupedData, mqttClient, abortSignal);
 }
 
 /**
@@ -194,9 +191,9 @@ export default async function main(
   await mqttClient.startConnection();
 
   Promise.all([
-    readDataAndSendIt('user1.json', mqttClient, true),
-    readDataAndSendIt('05ago2025.json', mqttClient, false),
-    readDataAndSendIt('07ago2025.json', mqttClient, false),
+    readDataAndSendIt(abortSignal, '03ago2023.json', mqttClient, true),
+    readDataAndSendIt(abortSignal, '05ago2025.json', mqttClient, false),
+    readDataAndSendIt(abortSignal, '07ago2025.json', mqttClient, false),
   ]).catch((err) => {
     console.error('Error reading data and sending messages:', err);
   });

@@ -16,7 +16,7 @@ export interface IMqtt {
  * Class implementing the IMqtt interface for connecting to an MQTT broker.
  */
 export class Mqtt implements IMqtt {
-  private server: string = process.env.BROKER_URL || 'broker.hivemq.com';
+  private server: string = process.env.BROKER_URL || 'mqtt://broker.hivemq.com';
   private port: number = Number(process.env.BROKER_PORT) || 1883;
   private username: string | undefined = process.env.BROKER_USERNAME;
   private password: string | undefined = process.env.BROKER_PASSWORD;
@@ -59,11 +59,11 @@ export class Mqtt implements IMqtt {
     if (this.password && this.password.trim() !== '') {
       connectionOptions.password = this.password;
     }
-    
+
     console.log(`Attempting to connect to ${this.server}:${this.port}...`);
-    console.log(`Connection options:`, { 
-      ...connectionOptions, 
-      password: connectionOptions.password ? '***' : undefined 
+    console.log(`Connection options:`, {
+      ...connectionOptions,
+      password: connectionOptions.password ? '***' : undefined,
     });
     this.#client = await connectAsync(this.server, connectionOptions);
 
