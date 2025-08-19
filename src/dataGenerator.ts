@@ -142,14 +142,3 @@ export function generateMultiUserData<T extends Measurement[] | UserData[]>(
     return result as T;
   }
 }
-
-/**
- * Generate realistic user IDs for multiple users
- */
-export function generateUserIds(baseUserId: number, count: number): number[] {
-  const userIds: number[] = [];
-  for (let i = 0; i < count; i++) {
-    userIds.push(generateUserId(baseUserId, i));
-  }
-  return userIds;
-}

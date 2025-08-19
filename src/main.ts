@@ -7,7 +7,7 @@ import type {
   UserData,
 } from './types';
 import { FakeMqtt, IMqtt, Mqtt } from './mqtt';
-import { generateMultiUserData, generateUserIds } from './dataGenerator';
+import { generateMultiUserData } from './dataGenerator';
 
 const dataFolder = process.env.DATA_FOLDER || 'data';
 const numberOfUsers = parseInt(process.env.NUMBER_OF_USERS || '3', 10);

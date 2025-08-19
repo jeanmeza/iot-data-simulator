@@ -71,21 +71,18 @@ export class Mqtt implements IMqtt {
 
     this.#client.on('connect', () => console.log('client re-connected'));
 
-    this.#client.on('reconnect', () => console.log('client re-connecting'));
+    this.#client.on('reconnect', () => console.log('MQTT reconnecting...'));
 
     this.#client.on('disconnect', () => console.log('client disconnected'));
 
     this.#client.on('offline', () => console.log('client offline'));
 
-    this.#client.on('error', (err) => this.handleError(err));
-
     this.#client.on('close', () => console.log('MQTT connection closed'));
 
-    this.#client.on('reconnect', () => console.log('MQTT reconnecting...'));
-
-    this.#client.on('error', (err) =>
-      console.error('MQTT error:', err.message),
-    );
+    this.#client.on('error', (err) => {
+      console.error('MQTT error:', err.message);
+      this.handleError(err);
+    });
   }
 
   sendMessage(topic: string, message: string | Buffer) {
