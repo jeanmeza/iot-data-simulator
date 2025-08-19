@@ -4,20 +4,23 @@ A simple MQTT-based simulator for publishing IoT sensor data such as GPS coordin
 
 ## Setup
 
-The program reads four environment variables to stablish the connection to a mqtt broker:
+The program reads five environment variables to stablish the connection to a mqtt broker:
 
 ```bash
-BROKER_URL=mqtt://broker.hivemq.com
-BROKER_PORT=1883
-BROKER_USERNAME=
-BROKER_PASSWORD=
+BROKER_URL=  # the broker url
+BROKER_PORT=  # the port 
+BROKER_USERNAME=  # the username, if necessary
+BROKER_PASSWORD=  # the password, if necessary
+NUMBER_OF_USERS=  # how many users to simulate
 ```
-
-Create a `.env` file in the root directory and add a `BROKER_URL=mqtt://broker.hivemq.com`.
-
-Otherwise, if you're using the UniGe, leave the BROKER_URL to the default value and set both the
-BROKER_USERNAME and BROKER_PASSWORD variables.
 
 Install the dependencies: `npm install`
 
-Now run the simulator: `npm start`
+Now run the simulator with:
+
+```pwsh
+# If running from the terminal on windows
+$env:NUMBER_OF_USERS=3; npm start
+```
+
+Otherwise, create an `.env` file and set the variables as shown above.
