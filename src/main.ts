@@ -88,6 +88,7 @@ function ignoreMeasurementType(measureType: MeasurementType) {
  * @param abortSignal an AbortSignal to allow graceful shutdown
  */
 async function prepareAndSendMessages(
+  userId: number,
   data: Map<number, DataGroup>,
   mqttClient: IMqtt,
   abortSignal: AbortSignal,
@@ -129,7 +130,7 @@ async function prepareAndSendMessages(
         const msg: Measurement = {
           date: Date.now(),
           value,
-          userId: datum.userId,
+          userId: userId,
           measureType: type,
         };
         mqttClient.sendMessage(topic, JSON.stringify(msg));
@@ -165,6 +166,7 @@ async function waitDelta(i: number, timeDeltas: number[]) {
  */
 async function readDataAndSendIt(
   abortSignal: AbortSignal,
+  userId: number,
   filename: string,
   mqttClient: IMqtt,
   flattenArray: boolean,
@@ -174,7 +176,7 @@ async function readDataAndSendIt(
     ? flatMeasurementData(data as UserData[])
     : (data as Measurement[]);
   const groupedData = groupMeasurementsByTimestamp(flattenedData);
-  await prepareAndSendMessages(groupedData, mqttClient, abortSignal);
+  await prepareAndSendMessages(userId, groupedData, mqttClient, abortSignal);
 }
 
 /**
@@ -186,14 +188,13 @@ async function readDataAndSendIt(
 export default async function main(
   abortSignal: AbortSignal,
 ): Promise<() => Promise<void>> {
-  // const mqttClient: IMqtt = new FakeMqtt();
-  const mqttClient: IMqtt = new Mqtt();
+  const mqttClient: IMqtt = new FakeMqtt();
+  // const mqttClient: IMqtt = new Mqtt();
   await mqttClient.startConnection();
 
   Promise.all([
-    readDataAndSendIt(abortSignal, '03ago2023.json', mqttClient, true),
-    readDataAndSendIt(abortSignal, '05ago2025.json', mqttClient, false),
-    readDataAndSendIt(abortSignal, '07ago2025.json', mqttClient, false),
+    readDataAndSendIt(abortSignal, 1001, '03ago2023.json', mqttClient, true),
+    readDataAndSendIt(abortSignal, 1001, '05ago2025.json', mqttClient, false),
   ]).catch((err) => {
     console.error('Error reading data and sending messages:', err);
   });
