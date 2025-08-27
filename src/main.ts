@@ -1,4 +1,4 @@
-import { readFile } from 'fs/promises';
+import { readFile, writeFile, appendFile } from 'fs/promises';
 import path from 'path';
 import type {
   Measurement,
@@ -11,6 +11,10 @@ import { generateMultiUserData } from './dataGenerator';
 
 const dataFolder = process.env.DATA_FOLDER || 'data';
 const numberOfUsers = parseInt(process.env.NUMBER_OF_USERS || '3', 10);
+const userIds = process.env.USER_IDS
+  ? process.env.USER_IDS.split(',').map((id) => parseInt(id.trim(), 10))
+  : null;
+const outputFile = process.env.OUTPUT_FILE || 'mqtt_output.log';
 
 /**
  * Read user data from a JSON file and generate data for multiple users.
@@ -26,11 +30,50 @@ async function readUserData(
   try {
     const originalData = JSON.parse(dataString);
 
+    // Validate user IDs if provided
+    if (userIds && userIds.length !== numberOfUsers) {
+      throw new Error(
+        `Number of user IDs (${userIds.length}) must match NUMBER_OF_USERS (${numberOfUsers})`,
+      );
+    }
+
     // Generate data for multiple users
-    return generateMultiUserData(originalData, numberOfUsers, gpsOnly);
+    return generateMultiUserData(
+      originalData,
+      numberOfUsers,
+      gpsOnly,
+      userIds || undefined,
+    );
   } catch (err: unknown) {
     console.error('Failed to parse user data JSON.', err);
     throw new Error('Failed to parse user data JSON');
+  }
+}
+
+/**
+ * Log MQTT message to file for verification
+ */
+async function logMessageToFile(topic: string, message: string): Promise<void> {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] Topic: ${topic} | Message: ${message}\n`;
+  try {
+    await appendFile(outputFile, logEntry);
+  } catch (error) {
+    console.error('Failed to write to log file:', error);
+  }
+}
+
+/**
+ * Initialize output log file
+ */
+async function initializeLogFile(): Promise<void> {
+  const header = `=== MQTT Output Log - Started at ${new Date().toISOString()} ===\n`;
+  const config = `Configuration: NUMBER_OF_USERS=${numberOfUsers}, USER_IDS=${userIds ? userIds.join(',') : 'auto-generated'}\n\n`;
+  try {
+    await writeFile(outputFile, header + config);
+    console.log(`📄 Output will be logged to: ${outputFile}`);
+  } catch (error) {
+    console.error('Failed to initialize log file:', error);
   }
 }
 
@@ -139,7 +182,11 @@ async function prepareAndSendMessages(
           userId: userId,
           measureType: type,
         };
-        mqttClient.sendMessage(topic, JSON.stringify(msg));
+        const msgString = JSON.stringify(msg);
+        mqttClient.sendMessage(topic, msgString);
+
+        // Log message to file for verification
+        await logMessageToFile(topic, msgString);
       }
     }
 
@@ -222,6 +269,17 @@ async function readDataAndSendIt(
 export default async function main(
   abortSignal: AbortSignal,
 ): Promise<() => Promise<void>> {
+  // Initialize log file
+  await initializeLogFile();
+
+  // Log configuration
+  console.log(`🔧 Configuration:`);
+  console.log(`   NUMBER_OF_USERS: ${numberOfUsers}`);
+  console.log(
+    `   USER_IDS: ${userIds ? userIds.join(', ') : 'auto-generated'}`,
+  );
+  console.log(`   OUTPUT_FILE: ${outputFile}`);
+
   const mqttClient: IMqtt = new FakeMqtt();
   // const mqttClient: IMqtt = new Mqtt();
   await mqttClient.startConnection();

@@ -12,6 +12,8 @@ BROKER_PORT=  # the port
 BROKER_USERNAME=  # the username, if necessary
 BROKER_PASSWORD=  # the password, if necessary
 NUMBER_OF_USERS=  # how many users to simulate
+USER_IDS=  #1001,2001,3001  # comma separated numbers
+OUTPUT_FILE=  # mqtt_output.log
 ```
 
 Install the dependencies: `npm install`
@@ -20,7 +22,7 @@ Now run the simulator with:
 
 ```pwsh
 # If running from the terminal on windows
-$env:NUMBER_OF_USERS=3; npm start
+$env:NUMBER_OF_USERS=3; $env:USER_IDS=1001,2001,3001; npm start
 ```
 
 Otherwise, create an `.env` file and set the variables as shown above.

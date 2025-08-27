@@ -27,7 +27,14 @@ function generateVariation(value: number, measureType: string): number {
 /**
  * Generate a new user ID based on the original user ID
  */
-function generateUserId(originalUserId: number, userIndex: number): number {
+function generateUserId(
+  originalUserId: number,
+  userIndex: number,
+  customUserIds?: number[],
+): number {
+  if (customUserIds && userIndex < customUserIds.length) {
+    return customUserIds[userIndex];
+  }
   return originalUserId + userIndex * 1000;
 }
 
@@ -47,10 +54,11 @@ function addTimeVariance(timestamp: number, userIndex: number): number {
 function cloneMeasurement(
   measurement: Measurement,
   userIndex: number,
+  customUserIds?: number[],
 ): Measurement {
   const newMeasurement: Measurement = {
     ...measurement,
-    userId: generateUserId(measurement.userId, userIndex),
+    userId: generateUserId(measurement.userId, userIndex, customUserIds),
     date: addTimeVariance(measurement.date, userIndex),
     value: measurement.value.map((val) => {
       if (
@@ -86,9 +94,17 @@ export function generateMultiUserData<T extends Measurement[] | UserData[]>(
   originalData: T,
   numberOfUsers: number,
   gpsOnly: boolean = false,
+  customUserIds?: number[],
 ): T {
   if (numberOfUsers <= 1) {
     return originalData;
+  }
+
+  // Validate custom user IDs if provided
+  if (customUserIds && customUserIds.length !== numberOfUsers) {
+    throw new Error(
+      `Number of custom user IDs (${customUserIds.length}) must match number of users (${numberOfUsers})`,
+    );
   }
 
   const isUserDataArray =
@@ -108,15 +124,24 @@ export function generateMultiUserData<T extends Measurement[] | UserData[]>(
       }));
     }
 
-    const result: UserData[] = [...processedUserData]; // Include original data
+    const result: UserData[] = [];
 
-    for (let userIndex = 1; userIndex < numberOfUsers; userIndex++) {
-      const newUserData: UserData[] = processedUserData.map((userDataItem) => ({
-        data: userDataItem.data.map((measurement) =>
-          cloneMeasurement(measurement, userIndex),
-        ),
-      }));
-      result.push(...newUserData);
+    // Process each user
+    for (let userIndex = 0; userIndex < numberOfUsers; userIndex++) {
+      if (userIndex === 0 && !customUserIds) {
+        // Include original data for first user if no custom IDs
+        result.push(...processedUserData);
+      } else {
+        // Generate data for each user (including first user if custom IDs provided)
+        const newUserData: UserData[] = processedUserData.map(
+          (userDataItem) => ({
+            data: userDataItem.data.map((measurement) =>
+              cloneMeasurement(measurement, userIndex, customUserIds),
+            ),
+          }),
+        );
+        result.push(...newUserData);
+      }
     }
 
     return result as T;
@@ -130,13 +155,20 @@ export function generateMultiUserData<T extends Measurement[] | UserData[]>(
       processedMeasurements = filterGpsData(measurements);
     }
 
-    const result: Measurement[] = [...processedMeasurements]; // Include original data
+    const result: Measurement[] = [];
 
-    for (let userIndex = 1; userIndex < numberOfUsers; userIndex++) {
-      const newMeasurements = processedMeasurements.map((measurement) =>
-        cloneMeasurement(measurement, userIndex),
-      );
-      result.push(...newMeasurements);
+    // Process each user
+    for (let userIndex = 0; userIndex < numberOfUsers; userIndex++) {
+      if (userIndex === 0 && !customUserIds) {
+        // Include original data for first user if no custom IDs
+        result.push(...processedMeasurements);
+      } else {
+        // Generate data for each user (including first user if custom IDs provided)
+        const newMeasurements = processedMeasurements.map((measurement) =>
+          cloneMeasurement(measurement, userIndex, customUserIds),
+        );
+        result.push(...newMeasurements);
+      }
     }
 
     return result as T;
