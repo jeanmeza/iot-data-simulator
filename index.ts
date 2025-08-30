@@ -1,7 +1,8 @@
 import { configDotenv } from 'dotenv';
-import main from './src/main';
 
 configDotenv({ override: true, encoding: 'utf-8', debug: true });
+
+import main from './src/main';
 
 const abortController = new AbortController();
 let cleanup: (() => Promise<void>) | undefined;

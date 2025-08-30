@@ -10,11 +10,20 @@ import { FakeMqtt, IMqtt, Mqtt } from './mqtt';
 import { generateMultiUserData } from './dataGenerator';
 
 const dataFolder = process.env.DATA_FOLDER || 'data';
-const numberOfUsers = parseInt(process.env.NUMBER_OF_USERS || '3', 10);
-const userIds = process.env.USER_IDS
-  ? process.env.USER_IDS.split(',').map((id) => parseInt(id.trim(), 10))
-  : null;
-const outputFile = process.env.OUTPUT_FILE || 'mqtt_output.log';
+
+function getNumberOfUsers(): number {
+  return parseInt(process.env.NUMBER_OF_USERS || '3', 10);
+}
+
+function getUserIds(): number[] | null {
+  return process.env.USER_IDS
+    ? process.env.USER_IDS.split(',').map((id) => parseInt(id.trim(), 10))
+    : null;
+}
+
+function getOutputFile(): string {
+  return process.env.OUTPUT_FILE || 'mqtt_output.log';
+}
 
 /**
  * Read user data from a JSON file and generate data for multiple users.
@@ -29,6 +38,9 @@ async function readUserData(
   const dataString = await readFile(dataFile, 'utf-8');
   try {
     const originalData = JSON.parse(dataString);
+
+    const numberOfUsers = getNumberOfUsers();
+    const userIds = getUserIds();
 
     // Validate user IDs if provided
     if (userIds && userIds.length !== numberOfUsers) {
@@ -57,7 +69,7 @@ async function logMessageToFile(topic: string, message: string): Promise<void> {
   const timestamp = new Date().toISOString();
   const logEntry = `[${timestamp}] Topic: ${topic} | Message: ${message}\n`;
   try {
-    await appendFile(outputFile, logEntry);
+    await appendFile(getOutputFile(), logEntry);
   } catch (error) {
     console.error('Failed to write to log file:', error);
   }
@@ -67,6 +79,10 @@ async function logMessageToFile(topic: string, message: string): Promise<void> {
  * Initialize output log file
  */
 async function initializeLogFile(): Promise<void> {
+  const numberOfUsers = getNumberOfUsers();
+  const userIds = getUserIds();
+  const outputFile = getOutputFile();
+
   const header = `=== MQTT Output Log - Started at ${new Date().toISOString()} ===\n`;
   const config = `Configuration: NUMBER_OF_USERS=${numberOfUsers}, USER_IDS=${userIds ? userIds.join(',') : 'auto-generated'}\n\n`;
   try {
@@ -272,16 +288,8 @@ export default async function main(
   // Initialize log file
   await initializeLogFile();
 
-  // Log configuration
-  console.log(`🔧 Configuration:`);
-  console.log(`   NUMBER_OF_USERS: ${numberOfUsers}`);
-  console.log(
-    `   USER_IDS: ${userIds ? userIds.join(', ') : 'auto-generated'}`,
-  );
-  console.log(`   OUTPUT_FILE: ${outputFile}`);
-
-  const mqttClient: IMqtt = new FakeMqtt();
-  // const mqttClient: IMqtt = new Mqtt();
+  // const mqttClient: IMqtt = new FakeMqtt();
+  const mqttClient: IMqtt = new Mqtt();
   await mqttClient.startConnection();
 
   Promise.all([

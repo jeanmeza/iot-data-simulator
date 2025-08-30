@@ -128,20 +128,13 @@ export function generateMultiUserData<T extends Measurement[] | UserData[]>(
 
     // Process each user
     for (let userIndex = 0; userIndex < numberOfUsers; userIndex++) {
-      if (userIndex === 0 && !customUserIds) {
-        // Include original data for first user if no custom IDs
-        result.push(...processedUserData);
-      } else {
-        // Generate data for each user (including first user if custom IDs provided)
-        const newUserData: UserData[] = processedUserData.map(
-          (userDataItem) => ({
-            data: userDataItem.data.map((measurement) =>
-              cloneMeasurement(measurement, userIndex, customUserIds),
-            ),
-          }),
-        );
-        result.push(...newUserData);
-      }
+      // Generate data for each user (always apply custom IDs if provided)
+      const newUserData: UserData[] = processedUserData.map((userDataItem) => ({
+        data: userDataItem.data.map((measurement) =>
+          cloneMeasurement(measurement, userIndex, customUserIds),
+        ),
+      }));
+      result.push(...newUserData);
     }
 
     return result as T;
@@ -159,16 +152,11 @@ export function generateMultiUserData<T extends Measurement[] | UserData[]>(
 
     // Process each user
     for (let userIndex = 0; userIndex < numberOfUsers; userIndex++) {
-      if (userIndex === 0 && !customUserIds) {
-        // Include original data for first user if no custom IDs
-        result.push(...processedMeasurements);
-      } else {
-        // Generate data for each user (including first user if custom IDs provided)
-        const newMeasurements = processedMeasurements.map((measurement) =>
-          cloneMeasurement(measurement, userIndex, customUserIds),
-        );
-        result.push(...newMeasurements);
-      }
+      // Generate data for each user (always apply custom IDs if provided)
+      const newMeasurements = processedMeasurements.map((measurement) =>
+        cloneMeasurement(measurement, userIndex, customUserIds),
+      );
+      result.push(...newMeasurements);
     }
 
     return result as T;
