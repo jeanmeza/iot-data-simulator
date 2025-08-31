@@ -8,6 +8,7 @@ import type {
 } from './types';
 import { FakeMqtt, IMqtt, Mqtt } from './mqtt';
 import { generateMultiUserData } from './dataGenerator';
+import { connectAsync, IClientOptions } from 'mqtt';
 
 const dataFolder = process.env.DATA_FOLDER || 'data';
 
@@ -291,15 +292,40 @@ export default async function main(
   // const mqttClient: IMqtt = new FakeMqtt();
   const mqttClient: IMqtt = new Mqtt();
   await mqttClient.startConnection();
+  const subscriberClient = await createSubscriberClient();
 
   Promise.all([
+    readDataAndSendIt(abortSignal, '07ago2025.json', mqttClient, false, true), // GPS only
     readDataAndSendIt(abortSignal, '03ago2023.json', mqttClient, true, false), // All sensor data
-    readDataAndSendIt(abortSignal, '05ago2025.json', mqttClient, false, true), // GPS only
   ]).catch((err) => {
     console.error('Error reading data and sending messages:', err);
   });
 
   return async () => {
     await mqttClient.closeConnection();
+    await subscriberClient.endAsync();
   };
+}
+
+async function createSubscriberClient() {
+  const connectionOptions: IClientOptions = {
+    port: 1883,
+    keepalive: 2,
+    reconnectPeriod: 1 * 1000,
+    connectTimeout: 15 * 1000,
+    reconnectOnConnackError: true,
+    username: 'studenti',
+    password: 'studentiDRUIDLAB_1',
+  };
+  const client = await connectAsync('mqtt://212.78.1.205', connectionOptions);
+  client.subscribe('sensor/actuator/alert');
+  client.on('message', (topic, message) => {
+    console.log(
+      `Received message on ${topic}: ${message.toString()}`.toUpperCase(),
+    );
+  });
+  console.log(
+    'Subscriber connected, subscribing to topic sensor/actuator/alert',
+  );
+  return client;
 }

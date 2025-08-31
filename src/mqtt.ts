@@ -10,6 +10,7 @@ export interface IMqtt {
   startConnection(): Promise<void>;
   sendMessage(topic: string, message: string | Buffer): void;
   closeConnection(): Promise<void>;
+  subscribe(): void;
 }
 
 /**
@@ -88,8 +89,7 @@ export class Mqtt implements IMqtt {
   sendMessage(topic: string, message: string | Buffer) {
     const client = this.client;
     if (!client || !client.connected) {
-      console.warn('MQTT client not connected. Skipping message:', topic);
-      return;
+      throw Error('Connection lost');
     }
 
     console.log(`Publishing to ${topic}:`, message);
@@ -108,6 +108,19 @@ export class Mqtt implements IMqtt {
       console.error(err.message);
       await this.closeConnection();
     }
+  }
+
+  subscribe() {
+    const client = this.client;
+    if (!client || !client.connected) {
+      throw Error('Connection lost');
+    }
+    client.subscribe('sensor/actuator/alert');
+    client.on('message', (msg) => {
+      console.log('\n=====================');
+      console.log(msg.toUpperCase());
+      console.log('=====================\n');
+    });
   }
 
   async closeConnection() {
@@ -134,4 +147,6 @@ export class FakeMqtt implements IMqtt {
   async closeConnection() {
     console.log('Fake MQTT connection closed');
   }
+
+  subscribe() {}
 }
