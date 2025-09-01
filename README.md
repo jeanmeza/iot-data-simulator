@@ -2,11 +2,6 @@
 
 A MQTT-based simulator for publishing IoT sensor data such as GPS coordinates, speed, heart rate, and more. Designed for use with MQTT brokers and compatible dashboards like Node-RED.
 
-## Authors
-
-- Sahar Ramezani Jolfaei
-- Jean Carlo Meza
-
 ## Setup
 
 The program reads five environment variables to stablish the connection to a mqtt broker:
@@ -31,3 +26,8 @@ $env:NUMBER_OF_USERS=3; $env:USER_IDS=1001,2001,3001; npm start
 ```
 
 Otherwise, create an `.env` file and set the variables as shown above.
+
+## Authors
+
+- Sahar Ramezani Jolfaei
+- Jean Carlo Meza
